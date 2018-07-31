@@ -1,12 +1,12 @@
 var creepTypes = ['harvester', 'upgrader', 'repairer', 'builder'];
 var creepPopulation = {
-    harvester: 6,
+    harvester: 4,
     upgrader: 2,
     repairer: 2,
     builder: 1,
 };
 var creepParts = {
-    harvester: [WORK, CARRY, MOVE],
+    harvester: [WORK, WORK, CARRY, CARRY, MOVE, MOVE],
     upgrader: [WORK, CARRY, MOVE],
     repairer: [WORK, CARRY, MOVE],
     builder: [WORK, CARRY, MOVE]
@@ -31,7 +31,7 @@ var spawnCreep = function(creepType) {
             console.log('Clearing non-existing creep memory:', name);
         }
     }
-    
+
     //Spawn creeps by type
     var newName = creepType + Game.time;
 
