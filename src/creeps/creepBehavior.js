@@ -1,4 +1,4 @@
-var roleHarvester = require('creeps_creepTypes_harvester');
+var roleHarvester = require('creeps_creepTypes_basicHarvester');
 var roleUpgrader = require('creeps_creepTypes_upgrader');
 var roleBuilder = require('creeps_creepTypes_builder');
 var roleRepairer = require('creeps_creepTypes_repairer');
