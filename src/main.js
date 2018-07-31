@@ -1,5 +1,5 @@
 var towerHandler = require('tower');
-var creepSpawn = require('creepSpawn');
+var creepSpawn = require('spawn_creepSpawn');
 var creepBehavior = require('creeps_creepBehavior');
 
 module.exports.loop = function () {
