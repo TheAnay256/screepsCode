@@ -15,10 +15,10 @@ var creepParts = {
 var creepSpawn = {
     run: function() {
         //Spawn creeps if pop too low
-        creepTypes.forEach((type) => {
-
+        creepTypes.some((type) => {
             if(_.filter(Game.creeps, (creep) => creep.memory.role == type).length < creepPopulation[type]){
                 spawnCreep(type);
+                return true;
             }
         });
     }
