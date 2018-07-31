@@ -1,83 +1,61 @@
-var roleBuilder = {
+let utils = require("creeps_util");
+let creepState = require("creeps_creepState");
 
+var roleBuilder = {
     /** @param {Creep} creep **/
     run: function(creep) {
+        switch(creep.memory.state) {
+            case creepState.building: //goes to nearest construction site, builds it
+                if(creep.memory.currentTarget) {
+                    let target = Game.getObjectById(creep.memory.currentTarget.id);
+                    let buildResult = creep.build(target);
 
-        if(creep.memory.building && creep.carry.energy == 0) {
-            creep.memory.building = false;
-            creep.say('🔄 refill');
-        }
-        if(!creep.memory.building && creep.carry.energy == creep.carryCapacity) {
-            creep.memory.currentTarget = findConstructionSite(creep);
-            if(creep.memory.currentTarget){
-                creep.memory.building = true;
-                creep.say('🚧 build');
-            }
-        }
-        if(creep.memory.building) {
-            if(creep.memory.currentTarget) {
-                let target = Game.getObjectById(creep.memory.currentTarget.id);
-                let buildResult = creep.build(target);
-                if(buildResult == ERR_NOT_IN_RANGE) {
-                    creep.moveTo(target, {visualizePathStyle: {stroke: '#ffffff'}});
+                    if(buildResult == ERR_NOT_IN_RANGE) {
+                        creep.moveTo(target, {visualizePathStyle: {stroke: '#ffffff'}});
+                    } else if ( buildResult == ERR_INVALID_TARGET ) { //If creep finishes building, find structure at that point and dump rest of energy into it
+                        creep.memory.state = creepState.reinforcing;
+                        creep.say("reinforce");
+                        let targetRoomPos = utils.getRoomPositionFromMemoryPos(creep.memory.currentTarget.pos);
+                        creep.memory.currentTarget = utils.getStructureFromRoomPos(creep, targetRoomPos);
+                    }
+                } else {
+                    creep.say("idle");
+                    creep.memory.state = creepState.idling;
                 }
-                else if(buildResult == ERR_INVALID_TARGET){
-                    creep.memory.building = false;
-                    creep.memory.repairing = true;
-                    creep.say("reinforce");
-                    let targetRoomPos = getRoomPositionFromMemoryPos(creep.memory.currentTarget.pos);
-                    console.log(targetRoomPos.lookFor(LOOK_STRUCTURES)[0].pos);
-                    creep.memory.currentTarget = {id: targetRoomPos.lookFor(LOOK_STRUCTURES)[0].id,
-                        pos: targetRoomPos.lookFor(LOOK_STRUCTURES)[0].pos};                
+                break;
+            case creepState.reinforcing: //if construction is finished, dumps rest of energy into it if applicable
+                if(creep.memory.currentTarget) {
+                    let repairTarget = Game.getObjectById(creep.memory.currentTarget.id);
+                    let repairResult = creep.repair(repairTarget);
+                    if(repairResult != OK) {
+                        creep.say("refill");
+                        creep.memory.state = creepState.refilling;
+                        creep.memory.currentTarget = null;
+                    }
                 }
-            }
-            else {
-                creep.memory.building = false;
-            }
-        }
-        if(creep.memory.repairing) {
-            console.log(creep.memory.currentTarget.id);
-            if(creep.memory.currentTarget) {
-                if(creep.repair(Game.getObjectById(creep.memory.currentTarget.id)) != OK) {
-                    creep.memory.repairing = false;
-                    creep.memory.currentTarget = null;
+                break;
+            case creepState.refilling: //fills back up and looks for a new construction site
+                var spawn = utils.findRoomSpawn(creep);
+                let withdrawAttempt = creep.withdraw(spawn, RESOURCE_ENERGY);
+                if(withdrawAttempt == ERR_NOT_IN_RANGE){ //move to spawn to grab resources
+                    creep.moveTo(spawn, {visualizePathStyle: {stroke: '#ffaa00'}});
+                } else if((withdrawAttempt == OK && creep.carry.energy == creep.carryCapacity) || withdrawAttempt == ERR_FULL) { //Got enough energy? back to work
+                    creep.memory.state = creepState.idling;
+                    creep.say("idle");
                 }
-            }
-            else{
-                creep.memory.repairing = false;
-            }
-        }
-        if(!creep.memory.building && !creep.memory.repairing) {
-            var spawn = creep.room.find(FIND_STRUCTURES, {
-                filter: (structure) => {
-                    return (structure.structureType == STRUCTURE_SPAWN);
+                break;
+            case creepState.idling: //sits and polls for new construction site
+                creep.memory.currentTarget = utils.findConstructionSite(creep);
+                if(creep.memory.currentTarget) { //only go for a construction site if one exists
+                    console.log(creep.name + " found construction site: " + creep.memory.currentTarget.id);
+                    creep.memory.state = creepState.building;
+                    creep.say("build");
                 }
-            })[0];
-            
-            if(creep.withdraw(spawn, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
-                creep.moveTo(spawn, {visualizePathStyle: {stroke: '#ffaa00'}});
-            }
+                break;
+            default:
+                creep.memory.state = creepState.refilling;
         }
     }
-};
-
-let findConstructionSite = function(creep) {
-    let sites = creep.room.find(FIND_CONSTRUCTION_SITES);
-    //finds least-frequently targeted sites
-    if(sites.length > 0){
-        let siteFrequency = sites.map(function(site) {
-            return creep.room.find(FIND_MY_CREEPS).filter((curCreep) => {
-                return site.id == curCreep.memory.currentSite;
-            }).length;
-        });
-        let siteToTarget = sites[siteFrequency.indexOf(Math.min.apply(Math, siteFrequency))];
-        return {id: siteToTarget.id, pos: siteToTarget.pos};
-    }
-    return null;
-}
-
-let getRoomPositionFromMemoryPos = function(pos) {
-    return new RoomPosition(pos.x, pos.y, pos.roomName);
 };
 
 module.exports = roleBuilder;

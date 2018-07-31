@@ -21,12 +21,30 @@ let util = {
         return null;
     },
 
+    findConstructionSite(creep) {
+        let sites = creep.room.find(FIND_CONSTRUCTION_SITES);
+        if(sites.length > 0) {
+            let targetSite = findLeastTargetedObject(creep, sites);
+            return creepMemoryify(targetSite);
+        }
+        return null;
+    },
+
     findRoomSpawn(creep) {
         return creep.room.find(FIND_STRUCTURES, {
             filter: (structure) => {
                 return (structure.structureType == STRUCTURE_SPAWN);
             }
         })[0];
+    },
+
+    getRoomPositionFromMemoryPos(pos) { //Return RoomPosition object from a creep's in-memory {x, y, roomName}
+        return new RoomPosition(pos.x, pos.y, pos.roomName);
+    },
+
+    getStructureFromRoomPos(creep, roomPosition) { //gets (first) Structure object at point specified in RoomPosition object
+        let structure = roomPosition.lookFor(LOOK_STRUCTURES)[0];
+        return creepMemoryify(structure);
     }
 }
 

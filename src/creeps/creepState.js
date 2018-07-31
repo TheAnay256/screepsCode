@@ -6,5 +6,7 @@ module.exports = {
     building: 4,
     upgrading: 5,
     pickingUp: 6,
-    droppingOff: 7
+    droppingOff: 7,
+    reinforcing: 8,
+    idling: 9
 }
