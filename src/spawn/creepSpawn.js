@@ -2,37 +2,33 @@ let spawnPopulation = require("spawn_spawnPopulation");
 
 let creepSpawn = {
     run: function() {
-        Object.keys(Game.rooms).forEach(function(roomId) {
+        Object.keys(Game.rooms).forEach((roomId) => {
             let room = Game.rooms[roomId];
-            let roomPopulation = spawnPopulation.getSpawnPopulation(room);
+            spawnPopulation.calcSpawnQueue(room); //Calculate spawn queue, every tick for now
 
-            //spawn creeps in room if pop too low
-            roomPopulation.creepTypes.some((type) => {
-                if(_.filter(Game.creeps, (creep) => creep.memory.role == type).length < roomPopulation.creepPopulation[type]){
-                    spawnCreep(room, type, roomPopulation.creepParts[type]);
-                    return true;
-                }
-            });
+            if(room.memory.spawnQueue.length > 0){
+                console.log("Spawning, queue:");
+                console.log(room.memory.spawnQueue.map(item => item.role));
+                spawnNextCreep(room);
+            }
         });
     }
 };
 
-var spawnCreep = function(room, creepType, creepParts) {
+var spawnNextCreep = function(room) {
     //Clear old creeps from memory
     clearDeadCreeps();
 
-    let spawn = room.find(FIND_STRUCTURES, {
-        filter: (structure) => {
-            return (structure.structureType == STRUCTURE_SPAWN);
-        }
-    })[0];
+    //Self explanatory - spawns creep
+    let spawn = findRoomSpawn(room);
+    let creepToSpawn = room.memory.spawnQueue[0];
+    var newName = creepToSpawn.role + Game.time;
 
-    //Spawn creeps by type
-    var newName = creepType + Game.time;
-
-    let spawnResult = spawn.spawnCreep(creepParts, newName, {memory: {role: creepType}});
+    let spawnResult = spawn.spawnCreep(creepToSpawn.parts, newName, {memory: {role: creepToSpawn.role}});
+    console.log(spawnResult);
     if(spawnResult == OK){
-        console.log('Spawning new ' + creepType + ': ' + newName + ' in room: ' + room.name);
+        console.log('Spawning new ' + creepSpawn.role + ': ' + newName + ' in room: ' + room.name);
+        room.memory.spawnQueue.shift(); //Erase first entry in array memory if creep spawned
     }
 };
 
@@ -44,5 +40,13 @@ var clearDeadCreeps = function() {
         }
     }
 };
+
+let findRoomSpawn = function(room) {
+    return room.find(FIND_STRUCTURES, {
+        filter: (structure) => {
+            return (structure.structureType == STRUCTURE_SPAWN);
+        }
+    })[0];
+}
 
 module.exports = creepSpawn;
