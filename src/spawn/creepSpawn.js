@@ -28,7 +28,7 @@ var spawnNextCreep = function(room) {
 
     let spawnResult = spawn.spawnCreep(creepToSpawn.parts, newName, {memory: {role: creepToSpawn.role}});
     if(spawnResult == OK){
-        console.log('Spawning new ' + creepSpawn.role + ': ' + newName + ' in room: ' + room.name);
+        console.log('Spawning new ' + creepToSpawn.role + ': ' + newName + ' in room: ' + room.name);
         spawn.memory.spawningCreepRole = creepToSpawn.role;
         room.memory.spawnQueue.shift(); //Erase first entry in array memory if creep spawned
     }
