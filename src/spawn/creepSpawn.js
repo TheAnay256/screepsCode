@@ -1,4 +1,5 @@
 let spawnPopulation = require("spawn_spawnPopulation");
+let spawnUtil = require("spawn_spawnUtil");
 
 let creepSpawn = {
     run: function() {
@@ -7,9 +8,10 @@ let creepSpawn = {
             spawnPopulation.calcSpawnQueue(room); //Calculate spawn queue, every tick for now
 
             if(room.memory.spawnQueue.length > 0){
-                console.log("Spawning, queue:");
-                console.log(room.memory.spawnQueue.map(item => item.role));
                 spawnNextCreep(room);
+            }
+            else{
+                spawnUtil.findRoomSpawn(room).memory.spawningCreepRole = null;
             }
         });
     }
@@ -20,14 +22,14 @@ var spawnNextCreep = function(room) {
     clearDeadCreeps();
 
     //Self explanatory - spawns creep
-    let spawn = findRoomSpawn(room);
+    let spawn = spawnUtil.findRoomSpawn(room);
     let creepToSpawn = room.memory.spawnQueue[0];
     var newName = creepToSpawn.role + Game.time;
 
     let spawnResult = spawn.spawnCreep(creepToSpawn.parts, newName, {memory: {role: creepToSpawn.role}});
-    console.log(spawnResult);
     if(spawnResult == OK){
         console.log('Spawning new ' + creepSpawn.role + ': ' + newName + ' in room: ' + room.name);
+        spawn.memory.spawningCreepRole = creepToSpawn.role;
         room.memory.spawnQueue.shift(); //Erase first entry in array memory if creep spawned
     }
 };
@@ -40,13 +42,5 @@ var clearDeadCreeps = function() {
         }
     }
 };
-
-let findRoomSpawn = function(room) {
-    return room.find(FIND_STRUCTURES, {
-        filter: (structure) => {
-            return (structure.structureType == STRUCTURE_SPAWN);
-        }
-    })[0];
-}
 
 module.exports = creepSpawn;

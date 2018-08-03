@@ -1,3 +1,5 @@
+let spawnUtil = require("spawn_spawnUtil");
+
 let spawnPopulation = {
     calcSpawnQueue: function(room) {
         room.memory.spawnQueue = room.memory.spawnQueue || [];
@@ -74,7 +76,8 @@ let findRoomStructures = function(room, structureTypes) { //returns a list of st
 getTotalRoomCreepCount = function(room, role) { //Gets count of all creeps both in the room and on the queue of a certain role
     let roomCreepCount = room.find(FIND_MY_CREEPS).filter((creep) => { return creep.memory.role === role; }).length;
     let queueCreepCount = room.memory.spawnQueue.filter((creep) => { return creep.role === role; }).length;
-    return roomCreepCount + queueCreepCount;
+    let spawningCreepRole = spawnUtil.findRoomSpawn(room).memory.spawningRole
+    return roomCreepCount + queueCreepCount + (spawningCreepRole === role ? 1 : 0);
 }
 
 module.exports = spawnPopulation;
