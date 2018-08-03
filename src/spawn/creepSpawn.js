@@ -7,11 +7,11 @@ let creepSpawn = {
             let room = Game.rooms[roomId];
             spawnPopulation.calcSpawnQueue(room); //Calculate spawn queue, every tick for now
 
+            let spawn = spawnUtil.findRoomSpawn(room);
             if(room.memory.spawnQueue.length > 0){
                 spawnNextCreep(room);
-            }
-            else{
-                spawnUtil.findRoomSpawn(room).memory.spawningCreepRole = null;
+            } else if ( room.memory.spawnQueue.length == 0 && !spawn.spawning ) {
+                spawn.memory.spawningCreepRole = null;
             }
         });
     }
